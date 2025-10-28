@@ -1,4 +1,9 @@
 package com.example.task_movil_api.categoria.dto;
-public record CategoriaUpdateDto(String nombre) {
-    
+
+import jakarta.validation.constraints.NotBlank;
+
+public record CategoriaUpdateDto(
+    @NotBlank String nombre) {
+
+
 }

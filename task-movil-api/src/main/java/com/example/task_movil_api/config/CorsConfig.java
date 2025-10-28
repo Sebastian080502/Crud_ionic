@@ -18,10 +18,10 @@ public class CorsConfig implements WebMvcConfigurer {
                 : allowedOriginsCsv.split("\\s*,\\s*");
 
         registry.addMapping("/api/**")
-                .allowedOriginPatterns(origins)              // ¡OJO: patterns, no allowedOrigins!
+                .allowedOriginPatterns(origins)            
                 .allowedMethods("GET","POST","PUT","PATCH","DELETE","OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(false)                     // sin cookies/sesión ⇒ false
+                .allowCredentials(false)                    
                 .maxAge(3600);
     }
 }

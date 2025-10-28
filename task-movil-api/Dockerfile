@@ -1,12 +1,20 @@
-# Imagen oficial de PostgreSQL
-FROM postgres:16
 
-# Variables de entorno
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=postgres
-ENV POSTGRES_DB=task_db
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn -q -B -DskipTests dependency:go-offline
+COPY src ./src
+RUN mvn -q -B -DskipTests package
 
-# Copiar scripts iniciales si los tienes
-# COPY ./init.sql /docker-entrypoint-initdb.d/
 
-EXPOSE 5432
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+COPY --from=build /app/target/*-SNAPSHOT.jar app.jar
+
+
+ENV JAVA_OPTS=""
+ENV SERVER_PORT=8080
+
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

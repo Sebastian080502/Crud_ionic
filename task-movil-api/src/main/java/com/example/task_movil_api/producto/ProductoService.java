@@ -1,4 +1,3 @@
-
 package com.example.task_movil_api.producto;
 
 import java.util.List;
@@ -7,41 +6,68 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.task_movil_api.categoria.CategoriaRepository;
+import com.example.task_movil_api.common.NotFoundException;
 import com.example.task_movil_api.producto.dto.ProductoCreateDto;
+import com.example.task_movil_api.producto.dto.ProductoResponseDto;
 import com.example.task_movil_api.producto.dto.ProductoUpdateDto;
 
-@Service @Transactional
+@Service
+@Transactional
 public class ProductoService {
-    private final ProductoRepository repo;
-    private final CategoriaRepository categoriaRepo;
 
-    public ProductoService(ProductoRepository repo, CategoriaRepository categoriaRepo){
-        this.repo = repo; this.categoriaRepo = categoriaRepo;
+    private final ProductoRepository productoRepo;
+    private final CategoriaRepository categoriaRepo;
+    private final ProductoMapper mapper;
+
+    public ProductoService(ProductoRepository productoRepo,
+                           CategoriaRepository categoriaRepo,
+                           ProductoMapper mapper) {
+        this.productoRepo = productoRepo;
+        this.categoriaRepo = categoriaRepo;
+        this.mapper = mapper;
     }
 
-    public Producto create(ProductoCreateDto dto){
-        var cat = categoriaRepo.findById(dto.categoriaId())
-          .orElseThrow(() -> new RuntimeException("Categoría no existe"));
+    public ProductoResponseDto create(ProductoCreateDto dto) {
+        var categoria = categoriaRepo.findById(dto.categoriaId())
+                .orElseThrow(() -> new NotFoundException("categoria no existe"));
+
         var p = new Producto();
         p.setNombre(dto.nombre());
         p.setPrecio(dto.precio());
-        p.setCategoria(cat);
-        return repo.save(p);
+        p.setCategoria(categoria);
+
+        p = productoRepo.save(p);
+        return mapper.toDto(p);
     }
 
-    public List<Producto> findAll(){ return repo.findAll(); }
-    public Producto findById(Long id){ return repo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado")); }
+    @Transactional(readOnly = true)
+    public List<ProductoResponseDto> findAll() {
+        return productoRepo.findAll().stream().map(mapper::toDto).toList();
+    }
 
-    public Producto update(Long id, ProductoUpdateDto dto){
-        var p = findById(id);
-        if (dto.nombre()!=null && !dto.nombre().isBlank()) p.setNombre(dto.nombre());
-        if (dto.precio()!=null) p.setPrecio(dto.precio());
-        if (dto.categoriaId()!=null){
-            var cat = categoriaRepo.findById(dto.categoriaId())
-              .orElseThrow(() -> new RuntimeException("Categoría no existe"));
-            p.setCategoria(cat);
+    @Transactional(readOnly = true)
+    public ProductoResponseDto findById(Long id) {
+        var p = productoRepo.findById(id).orElseThrow(() -> new NotFoundException("producto no existe"));
+        return mapper.toDto(p);
+    }
+
+    public ProductoResponseDto update(Long id, ProductoUpdateDto dto) {
+        var p = productoRepo.findById(id).orElseThrow(() -> new NotFoundException("producto no existe"));
+        var categoria = categoriaRepo.findById(dto.categoriaId())
+                .orElseThrow(() -> new NotFoundException("categoria no existe"));
+
+        p.setNombre(dto.nombre());
+        p.setPrecio(dto.precio());
+        p.setCategoria(categoria);
+
+        p = productoRepo.save(p);
+        return mapper.toDto(p);
+    }
+
+    public void delete(Long id) {
+        if (!productoRepo.existsById(id)) {
+            throw new NotFoundException("producto no existe");
         }
-        return repo.save(p);
+        productoRepo.deleteById(id);
     }
-    public void delete(Long id){ repo.delete(findById(id)); }
 }

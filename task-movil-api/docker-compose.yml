@@ -8,8 +8,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: api_user
+      POSTGRES_PASSWORD: api_1234
       POSTGRES_DB: task_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
